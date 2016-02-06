@@ -3,13 +3,15 @@ package main
 import (
 	"fmt"
 	"io/ioutil"
+	"net/http"
 	"os"
 
 	"github.com/google/go-github/github"
+	// "github.com/mattn/go-sqlite3"
 	"golang.org/x/oauth2"
 )
 
-func main() {
+func handler(w http.ResponseWriter, r *http.Request) {
 	dat, err := ioutil.ReadFile("auth_token.txt")
 	if err != nil {
 		fmt.Println(err)
@@ -29,20 +31,25 @@ func main() {
 		ListOptions: github.ListOptions{PerPage: 100},
 	}
 
-	var starredRepos []github.StarredRepository
+	var starredRepos []github.Repository
 	for {
 		repos, resp, err := client.Activity.ListStarred("", starOpt)
 		if err != nil {
 			fmt.Println(err)
 			break
 		}
-		starredRepos = append(starredRepos, repos...)
+
+		// add starred repos
+		for _, repo := range repos {
+			starredRepos = append(starredRepos, *repo.Repository)
+		}
+
+		// get next page
 		if resp.NextPage == 0 {
 			break
 		}
 		starOpt.ListOptions.Page = resp.NextPage
 	}
-	fmt.Println(len(starredRepos))
 
 	// get popular repos
 	popOpt := &github.SearchOptions{
@@ -58,16 +65,27 @@ func main() {
 			fmt.Println(err)
 			break
 		}
+
+		// add popular repos
 		popularRepos = append(popularRepos, searchResults.Repositories...)
+
+		// get next page
 		if resp.NextPage == 0 {
 			break
 		}
-		fmt.Println(resp.NextPage)
 		popOpt.ListOptions.Page = resp.NextPage
 	}
 
+	// print list
+	fmt.Fprint(w, "<html><head></head><body>")
+	fmt.Fprint(w, "<ul>")
 	for _, repo := range popularRepos {
-		fmt.Println(*repo.Name)
+		fmt.Fprintf(w, "<li><a href=\"%s\">%s/%s (%d)</a></li>", *repo.HTMLURL, *repo.Owner.Login, *repo.Name, *repo.StargazersCount)
 	}
-	fmt.Println(len(popularRepos))
+	fmt.Fprint(w, "</ul></body></html>")
+}
+
+func main() {
+	http.HandleFunc("/", handler)
+	http.ListenAndServe(":4000", nil)
 }
