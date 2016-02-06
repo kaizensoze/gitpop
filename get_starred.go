@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"io/ioutil"
 	"os"
 
 	"github.com/google/go-github/github"
@@ -9,8 +10,15 @@ import (
 )
 
 func main() {
+	dat, err := ioutil.ReadFile("auth_token.txt")
+	if err != nil {
+		fmt.Println(err)
+		os.Exit(1)
+	}
+	authToken := string(dat)
+
 	ts := oauth2.StaticTokenSource(
-		&oauth2.Token{AccessToken: "40723bd8f8b831eb5598b1199338b41254019982"},
+		&oauth2.Token{AccessToken: authToken},
 	)
 	tc := oauth2.NewClient(oauth2.NoContext, ts)
 
