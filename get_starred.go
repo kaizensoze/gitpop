@@ -25,24 +25,49 @@ func main() {
 	client := github.NewClient(tc)
 
 	// get starred repos
-	opt := &github.ActivityListStarredOptions{
+	starOpt := &github.ActivityListStarredOptions{
 		ListOptions: github.ListOptions{PerPage: 100},
 	}
 
 	var starredRepos []github.StarredRepository
 	for {
-		repos, resp, err := client.Activity.ListStarred("", opt)
+		repos, resp, err := client.Activity.ListStarred("", starOpt)
 		if err != nil {
 			fmt.Println(err)
-			os.Exit(1)
+			break
 		}
 		starredRepos = append(starredRepos, repos...)
 		if resp.NextPage == 0 {
 			break
 		}
-		opt.ListOptions.Page = resp.NextPage
+		starOpt.ListOptions.Page = resp.NextPage
 	}
 	fmt.Println(len(starredRepos))
 
-	// TODO: get most starred repos from MAX..1000
+	// get popular repos
+	popOpt := &github.SearchOptions{
+		Sort: "stars",
+		ListOptions: github.ListOptions{PerPage: 100},
+	}
+
+	var popularRepos []github.Repository
+	for {
+		searchResults, resp, err := client.Search.Repositories("stars:>=1000",
+																													 popOpt)
+		if err != nil {
+			fmt.Println(err)
+			break
+		}
+		popularRepos = append(popularRepos, searchResults.Repositories...)
+		if resp.NextPage == 0 {
+			break
+		}
+		fmt.Println(resp.NextPage)
+		popOpt.ListOptions.Page = resp.NextPage
+	}
+
+	for _, repo := range popularRepos {
+		fmt.Println(*repo.Name)
+	}
+	fmt.Println(len(popularRepos))
 }
