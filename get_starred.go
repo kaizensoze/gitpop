@@ -13,6 +13,8 @@ import (
 )
 
 func main() {
+	fmt.Println("Server running at http://localhost:4000")
+
 	http.HandleFunc("/", handler)
 	http.ListenAndServe(":4000", nil)
 }
