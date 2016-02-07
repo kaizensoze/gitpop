@@ -7,7 +7,6 @@ import (
 	"os"
 
 	"github.com/google/go-github/github"
-	// "github.com/mattn/go-sqlite3"
 	"golang.org/x/oauth2"
 )
 
@@ -58,9 +57,14 @@ func handler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	var popularRepos []github.Repository
+	maxStars := 999999999
+	minStars := 1000
+	stars := maxStars
+	q := ""
 	for {
-		searchResults, resp, err := client.Search.Repositories("stars:>=1000",
-																													 popOpt)
+		q = fmt.Sprintf("stars:<=%d", stars)
+		fmt.Printf("%s %d\n", q, popOpt.ListOptions.Page)
+		searchResults, resp, err := client.Search.Repositories(q, popOpt)
 		if err != nil {
 			fmt.Println(err)
 			break
@@ -71,16 +75,32 @@ func handler(w http.ResponseWriter, r *http.Request) {
 
 		// get next page
 		if resp.NextPage == 0 {
+			lastRepo := popularRepos[len(popularRepos)-1]
+			lastStars := *lastRepo.StargazersCount
+			if lastStars >= minStars {
+				stars = lastStars
+				popOpt.ListOptions.Page = 0
+				continue
+			}
 			break
 		}
 		popOpt.ListOptions.Page = resp.NextPage
+	}
+
+	// remove already starred from popular repos list
+	for i, repo := range popularRepos {
+		if contains(starredRepos, repo) {
+			popularRepos = append(popularRepos[:i], popularRepos[i+1:]...)
+		}
 	}
 
 	// print list
 	fmt.Fprint(w, "<html><head></head><body>")
 	fmt.Fprint(w, "<ul>")
 	for _, repo := range popularRepos {
-		fmt.Fprintf(w, "<li><a href=\"%s\">%s/%s (%d)</a></li>", *repo.HTMLURL, *repo.Owner.Login, *repo.Name, *repo.StargazersCount)
+		fmt.Fprintf(w, "<li><a href=\"%s\">%s/%s (%d)</a></li>",
+								*repo.HTMLURL, *repo.Owner.Login, *repo.Name,
+								*repo.StargazersCount)
 	}
 	fmt.Fprint(w, "</ul></body></html>")
 }
@@ -88,4 +108,13 @@ func handler(w http.ResponseWriter, r *http.Request) {
 func main() {
 	http.HandleFunc("/", handler)
 	http.ListenAndServe(":4000", nil)
+}
+
+func contains(s []github.Repository, e github.Repository) bool {
+    for _, a := range s {
+        if *a.ID == *e.ID {
+            return true
+        }
+    }
+    return false
 }
