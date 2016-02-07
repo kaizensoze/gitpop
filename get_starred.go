@@ -23,25 +23,24 @@ func handler(w http.ResponseWriter, r *http.Request) {
 		start = math.MaxInt32
 	}
 
-	popularRepos := getPopularRepos(start)
-
-	lastRepo := popularRepos[len(popularRepos)-1]
-	lastStars := *lastRepo.StargazersCount
+	popularRepos, lastStars := getPopularRepos(start)
 
 	// print list
 	fmt.Fprint(w, "<html><head></head><body>")
 	fmt.Fprint(w, "<ul>")
 	for _, repo := range popularRepos {
-		fmt.Fprintf(w, "<li><a href=\"%s\">%s/%s (%d)</a></li>",
-								*repo.HTMLURL, *repo.Owner.Login, *repo.Name,
-								*repo.StargazersCount)
+		fmt.Fprintf(w, `<li><a href="%s">%s/%s (%d)</a></li>`,
+			*repo.HTMLURL, *repo.Owner.Login, *repo.Name,
+			*repo.StargazersCount)
 	}
 	fmt.Fprint(w, "</ul>")
-	fmt.Fprintf(w, "<div style=\"padding-left: 40px;\"><a href=\"%s/?start=%d\">Next</a></div>", r.URL.Host, lastStars)
+	fmt.Fprintf(w, `<div style="padding-left: 40px;">
+										<a href="%s/?start=%d">Next</a>
+									</div>`, r.URL.Host, lastStars)
 	fmt.Fprint(w, "</body></html>")
 }
 
-func getPopularRepos(start int) []github.Repository {
+func getPopularRepos(start int) ([]github.Repository, int) {
 	dat, err := ioutil.ReadFile("auth_token.txt")
 	if err != nil {
 		fmt.Println(err)
@@ -83,9 +82,12 @@ func getPopularRepos(start int) []github.Repository {
 
 	// get popular repos
 	popOpt := &github.SearchOptions{
-		Sort: "stars",
+		Sort:        "stars",
 		ListOptions: github.ListOptions{PerPage: 100},
 	}
+
+	var lastRepo github.Repository
+	var lastStars int
 
 	var popularRepos []github.Repository
 	q := fmt.Sprintf("stars:<=%d", start)
@@ -98,6 +100,9 @@ func getPopularRepos(start int) []github.Repository {
 
 		// add popular repos
 		popularRepos = append(popularRepos, searchResults.Repositories...)
+
+		lastRepo = popularRepos[len(popularRepos)-1]
+		lastStars = *lastRepo.StargazersCount
 
 		// get next page
 		if resp.NextPage == 0 {
@@ -113,14 +118,14 @@ func getPopularRepos(start int) []github.Repository {
 		}
 	}
 
-	return popularRepos
+	return popularRepos, lastStars
 }
 
 func contains(s []github.Repository, e github.Repository) bool {
-    for _, a := range s {
-        if *a.ID == *e.ID {
-            return true
-        }
-    }
-    return false
+	for _, a := range s {
+		if *a.ID == *e.ID {
+			return true
+		}
+	}
+	return false
 }
