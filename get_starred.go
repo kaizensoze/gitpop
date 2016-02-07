@@ -1,6 +1,7 @@
 package main
 
 import (
+	"database/sql"
 	"fmt"
 	"io/ioutil"
 	"math"
@@ -9,10 +10,28 @@ import (
 	"strconv"
 
 	"github.com/google/go-github/github"
+	_ "github.com/mattn/go-sqlite3"
 	"golang.org/x/oauth2"
 )
 
+var db *sql.DB
+
 func main() {
+	var err error
+	db, err = sql.Open("sqlite3", "./foo.db")
+	if err != nil {
+	}
+	defer db.Close()
+
+	sqlStmt := `
+		create table if not exists excludes (id integer not null primary key);
+	`
+	_, err = db.Exec(sqlStmt)
+	if err != nil {
+		fmt.Printf("%q: %s\n", err, sqlStmt)
+		return
+	}
+
 	http.HandleFunc("/", handler)
 	http.ListenAndServe(":4000", nil)
 }
@@ -111,9 +130,23 @@ func getPopularRepos(start int) ([]github.Repository, int) {
 		popOpt.ListOptions.Page = resp.NextPage
 	}
 
+	// get excludes
+	rows, err := db.Query("select id from excludes")
+	if err != nil {
+		fmt.Println(err)
+	}
+	defer rows.Close()
+
+	var excludes []int
+	for rows.Next() {
+		var id int
+		rows.Scan(&id)
+		excludes = append(excludes, id)
+	}
+
 	// remove already starred from popular repos list
 	for i, repo := range popularRepos {
-		if contains(starredRepos, repo) {
+		if contains(starredRepos, repo) || contains2(excludes, *repo.ID) {
 			popularRepos = append(popularRepos[:i], popularRepos[i+1:]...)
 		}
 	}
@@ -124,6 +157,15 @@ func getPopularRepos(start int) ([]github.Repository, int) {
 func contains(s []github.Repository, e github.Repository) bool {
 	for _, a := range s {
 		if *a.ID == *e.ID {
+			return true
+		}
+	}
+	return false
+}
+
+func contains2(s []int, e int) bool {
+	for _, a := range s {
+		if a == e {
 			return true
 		}
 	}
