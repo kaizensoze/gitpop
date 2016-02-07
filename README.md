@@ -18,3 +18,19 @@ providing an auth token.
 ...but I'll leave that as an exercise for the reader as this does the trick for
 now for occasionally going through and finding new/popular repos to star [as
 long as I don't clear my browser history...]
+
+### usage
+
+Create auth token file
+```zsh
+> auth_token.txt
+<AUTH_TOKEN>
+^C
+```
+
+Build and run the server
+```zsh
+go build get_starred.go && ./get_starred
+```
+
+Go to [http://localhost:4000](http://localhost:4000)
