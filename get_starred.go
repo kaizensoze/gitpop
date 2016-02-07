@@ -14,6 +14,7 @@ import (
 	"golang.org/x/oauth2"
 )
 
+var host string
 var db *sql.DB
 
 func main() {
@@ -37,25 +38,41 @@ func main() {
 }
 
 func handler(w http.ResponseWriter, r *http.Request) {
-	start, err := strconv.Atoi(r.URL.Query().Get("start"))
-	if err != nil {
-		start = math.MaxInt32
-	}
+	host = r.URL.Host
 
+	if r.Method == "GET" {
+		start, err := strconv.Atoi(r.URL.Query().Get("start"))
+		if err != nil {
+			start = math.MaxInt32
+		}
+		printList(w, start)
+	} else if r.Method == "POST" {
+		// TODO: get id from URL
+		addExclude()
+	}
+}
+
+func printList(w http.ResponseWriter, start int) {
 	popularRepos, lastStars := getPopularRepos(start)
 
 	// print list
 	fmt.Fprint(w, "<html><head></head><body>")
 	fmt.Fprint(w, "<ul>")
 	for _, repo := range popularRepos {
-		fmt.Fprintf(w, `<li><a href="%s">%s/%s (%d)</a></li>`,
+		fmt.Fprintf(w, `<li><a href="%s">%s/%s (%d)</a>
+												<form action="/exclude?id=%d" method="POST" id="form1"
+															style="display: inline;">
+													<input type="submit" value="X">
+												</form>
+										</li>
+										`,
 			*repo.HTMLURL, *repo.Owner.Login, *repo.Name,
-			*repo.StargazersCount)
+			*repo.StargazersCount, *repo.ID)
 	}
 	fmt.Fprint(w, "</ul>")
 	fmt.Fprintf(w, `<div style="padding-left: 40px;">
 										<a href="%s/?start=%d">Next</a>
-									</div>`, r.URL.Host, lastStars)
+									</div>`, host, lastStars)
 	fmt.Fprint(w, "</body></html>")
 }
 
@@ -152,6 +169,10 @@ func getPopularRepos(start int) ([]github.Repository, int) {
 	}
 
 	return popularRepos, lastStars
+}
+
+func addExclude() {
+	fmt.Println("addExclude")
 }
 
 func contains(s []github.Repository, e github.Repository) bool {
