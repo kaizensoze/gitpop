@@ -2,8 +2,12 @@
 {% block body %}
 <ul>
 {% for starred_repo in starred_repos %}
-  <li><a id="{{starred_repo.id}}" href="{{starred_repo.html_url}}">
-    {{starred_repo.full_name}} ({{starred_repo.stargazers_count}})</a></li>
+  <li>
+    <a id="{{starred_repo.id}}" href="{{starred_repo.html_url}}">
+    {{starred_repo.full_name}} ({{starred_repo.stargazers_count}})</a>
+    <button type="button" id="{{starred_repo.id}}" class="remove-button"
+      style="display: inline;">X</button>
+  </li>
 {% endfor %}
 </ul>
 <a style="margin-left: 40px;"

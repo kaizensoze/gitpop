@@ -1,7 +1,7 @@
 import os, sys
 from sqlite3 import dbapi2 as sqlite3
 from flask import Flask, request, session, g, redirect, url_for, abort, \
-     render_template
+     render_template, jsonify
 from github import Github
 
 f = open('auth_token.txt', 'r')
@@ -66,12 +66,16 @@ def index():
 
     starred_ids = set([x.id for x in starred_repos])
     popular_ids = set([x.id for x in popular_repos])
-    result_ids = popular_ids.difference(starred_ids)
+
+    # get ignore ids
+    db = get_db()
+    cur = db.execute('select id from ignores')
+    ignore_ids = set([x[0] for x in cur.fetchall()])
+
+    result_ids = popular_ids - starred_ids - ignore_ids
 
     result_repos = [popular_map[id] for id in result_ids]
     result_repos.sort(key=lambda x: x.stargazers_count, reverse=True)
-
-    # TODO: get ignored
 
     sample = [{
         "id": 1,
@@ -84,7 +88,11 @@ def index():
 
 @app.route('/ignore', methods=['POST'])
 def ignore():
-    pass
+    repo_id = request.form['id']
+    db = get_db()
+    db.execute('insert or ignore into ignores (id) values (?)', [repo_id])
+    db.commit()
+    return 'blah'
 
 def get_popular_repos(start):
     query = "stars:<{0}".format(start)
