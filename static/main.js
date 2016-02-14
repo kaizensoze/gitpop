@@ -6,4 +6,8 @@ $(document).ready(function() {
     var data = { "id": repoId };
     $.post($SCRIPT_ROOT + '/ignore', data);
   });
+
+  $('.remove-all').on('click', function(event) {
+    $('.remove-button:not(:last)').trigger('click');
+  });
 });

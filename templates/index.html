@@ -1,15 +1,14 @@
 {% extends "layout.html" %}
 {% block body %}
+<button type="button" class="remove-all">X all on this page</button>
 <ul>
 {% for starred_repo in starred_repos %}
   <li>
     <a id="{{starred_repo.id}}" href="{{starred_repo.html_url}}">
     {{starred_repo.full_name}} ({{starred_repo.stargazers_count}})</a>
-    <button type="button" id="{{starred_repo.id}}" class="remove-button"
-      style="display: inline;">X</button>
+    <button type="button" id="{{starred_repo.id}}" class="remove-button">X</button>
   </li>
 {% endfor %}
 </ul>
-<a style="margin-left: 40px;"
-  href="/?start={{starred_repos|last|attr("stargazers_count")}}">Next</a>
+<a class="next" href="/?start={{starred_repos|last|attr("stargazers_count")}}">Next</a>
 {% endblock %}
