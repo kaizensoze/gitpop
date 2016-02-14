@@ -1,0 +1,15 @@
+<head>
+  <title>github-explore</title>
+</head>
+
+<body>
+  {{> starred}}
+</body>
+
+<template name="starred">
+  <ul>
+    {{#each starred}}
+      <li>{{full_name}}</li>
+    {{/each}}
+  </ul>
+</template>
