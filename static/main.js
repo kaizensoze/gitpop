@@ -8,6 +8,8 @@ $(document).ready(function() {
   });
 
   $('.remove-all').on('click', function(event) {
-    $('.remove-button:not(:last)').trigger('click');
+    if (confirm('X all on this page?')) {
+      $('.remove-button:not(:last)').trigger('click');
+    }
   });
 });
