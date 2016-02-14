@@ -77,20 +77,18 @@ def index():
     result_repos = [popular_map[id] for id in result_ids]
     result_repos.sort(key=lambda x: x.stargazers_count, reverse=True)
 
-    sample = [{
-        "id": 1,
-        "full_name": "blah",
-        "html_url": "blah",
-        "stargazers_count": 500
-    }]
+    last_starred = min(x.stargazers_count for x in popular_repos)
 
-    return render_template('index.html', starred_repos=result_repos)
+    return render_template('index.html',
+        starred_repos=result_repos, last_starred=last_starred)
 
 @app.route('/ignore', methods=['POST'])
 def ignore():
     repo_id = request.form['id']
+    starred = request.form['starred']
     db = get_db()
-    db.execute('insert or ignore into ignores (id) values (?)', [repo_id])
+    db.execute('insert or ignore into ignores (id, starred) \
+                values (?, ?)', [repo_id, starred])
     db.commit()
     return 'blah'
 
