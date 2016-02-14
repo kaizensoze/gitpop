@@ -1,0 +1,9 @@
+{% extends "layout.html" %}
+{% block body %}
+  <ul>
+  {% for starred_repo in starred_repos %}
+    <li><a id="{{starred_repo.id}}" href="{{starred_repo.html_url}}">{{starred_repo.full_name}} ({{starred_repo.stargazers_count}})</a></li>
+  {% endfor %}
+  </ul>
+  <a style="margin-left: 40px;" href="/?start={{starred_repos|last|attr("stargazers_count")}}">Next</a>
+{% endblock %}
