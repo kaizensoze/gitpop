@@ -16,6 +16,7 @@ Create auth token
 Install Flask 1.0+ and run app
 ```
 pip install https://github.com/mitsuhiko/flask/tarball/master
+pip install PyGithub
 flask --app=app initdb
 flask --app=app run
 ```
