@@ -1,13 +1,15 @@
-import os, sys
+import json, os, sys
 from sqlite3 import dbapi2 as sqlite3
 from flask import Flask, request, session, g, redirect, url_for, abort, \
      render_template, jsonify
 from github import Github
+from flask_github import GitHub
 
-f = open('auth_token.txt', 'r')
-auth_token = f.read().strip()
+# github
+auth_token = open('auth_token.txt', 'r').read().strip()
 github = Github(auth_token, per_page=100)
 
+# flask app
 app = Flask(__name__)
 
 app.config.update(dict(
@@ -18,6 +20,12 @@ app.config.update(dict(
     PASSWORD='default'
 ))
 app.config.from_envvar('FLASKR_SETTINGS', silent=True)
+
+# flask-github
+github_app_info = json.loads(open('github_app.json', 'r').read())
+app.config['GITHUB_CLIENT_ID'] = str(github_app_info['Client_ID'])
+app.config['GITHUB_CLIENT_SECRET'] = str(github_app_info['Client_Secret'])
+github2 = GitHub(app)
 
 def connect_db():
     """Connects to the specific database."""
@@ -52,35 +60,43 @@ def close_db(error):
     if hasattr(g, 'sqlite_db'):
         g.sqlite_db.close()
 
+@app.before_request
+def before_request():
+    g.user = None
+    if 'user_id' in session:
+        g.user = get_db().execute('select * from users where access_token = ?',
+                    session['user_id']).fetchone()
+
 @app.route('/')
 def index():
-    start = 999999999
-    if request.args.get('start'):
-        start = request.args.get('start')
+    #start = 999999999
+    #if request.args.get('start'):
+    #    start = request.args.get('start')
 
-    starred_repos = github.get_user().get_starred()
-    popular_repos = get_popular_repos(start)[:500]
+    #starred_repos = github.get_user().get_starred()
+    #popular_repos = get_popular_repos(start)[:500]
 
-    starred_map = {x.id: x for x in starred_repos}
-    popular_map = {x.id: x for x in popular_repos}
+    #starred_map = {x.id: x for x in starred_repos}
+    #popular_map = {x.id: x for x in popular_repos}
 
-    starred_ids = set([x.id for x in starred_repos])
-    popular_ids = set([x.id for x in popular_repos])
+    #starred_ids = set([x.id for x in starred_repos])
+    #popular_ids = set([x.id for x in popular_repos])
 
-    # get ignore ids
-    db = get_db()
-    cur = db.execute('select id from ignores')
-    ignore_ids = set([x[0] for x in cur.fetchall()])
+    ## get ignore ids
+    #db = get_db()
+    #cur = db.execute('select id from ignores')
+    #ignore_ids = set([x[0] for x in cur.fetchall()])
 
-    result_ids = popular_ids - starred_ids - ignore_ids
+    #result_ids = popular_ids - starred_ids - ignore_ids
 
-    result_repos = [popular_map[id] for id in result_ids]
-    result_repos.sort(key=lambda x: x.stargazers_count, reverse=True)
+    #result_repos = [popular_map[id] for id in result_ids]
+    #result_repos.sort(key=lambda x: x.stargazers_count, reverse=True)
 
-    last_starred = min(x.stargazers_count for x in popular_repos)
+    #last_starred = min(x.stargazers_count for x in popular_repos)
 
-    return render_template('index.html',
-        starred_repos=result_repos, last_starred=last_starred)
+    #return render_template('index.html',
+    #    starred_repos=result_repos, last_starred=last_starred)
+    return render_template('test.html')
 
 @app.route('/ignore', methods=['POST'])
 def ignore():
@@ -100,3 +116,4 @@ def get_popular_repos(start):
         order="desc"
     )
     return popular_repos
+
