@@ -99,7 +99,8 @@ def index():
     popular_ids = set([x.id for x in popular_repos])
 
     # get ignore ids
-    ignores = Ignore.query.all()
+
+    ignores = Ignore.query.filter_by(user_id=g.user.id).all()
     ignore_ids = set([x.id for x in ignores])
 
     result_ids = popular_ids - starred_ids - ignore_ids
