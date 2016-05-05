@@ -1,5 +1,11 @@
 {% extends "layout.html" %}
 {% block body %}
+{# logged in section #}
+<div class="logged-in">
+  Welcome, {{ g.user.username }}! <a href="{{ url_for("logout") }}">Logout</a>
+</div>
+
+{# content section #}
 <button type="button" class="remove-all">X all on this page</button>
 <ul>
 {% for starred_repo in starred_repos %}
@@ -7,7 +13,6 @@
     <a id="{{starred_repo.id}}" href="{{starred_repo.html_url}}">
     {{starred_repo.full_name}} ({{starred_repo.stargazers_count}})</a>
     <button type="button" id="{{starred_repo.id}}"
-      data-starred="{{starred_repo.stargazers_count}}"
       class="remove-button">X</button>
   </li>
 {% endfor %}
