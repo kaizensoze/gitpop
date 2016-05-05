@@ -1,5 +1,4 @@
 *.pyc
 app.db
-auth_token.txt
-gitpop
-github_app.json
+gitpop/
+instance/

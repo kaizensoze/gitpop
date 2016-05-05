@@ -2,30 +2,25 @@ import json, os, sys
 
 from flask import Flask, request, session, g, redirect, url_for, abort, \
         render_template, render_template_string, jsonify
+from flask_github import GitHub
+
+from github import Github
 
 from sqlalchemy import create_engine, Column, Integer, String, ForeignKey
 from sqlalchemy.orm import scoped_session, sessionmaker
 from sqlalchemy.ext.declarative import declarative_base
 
-from github import Github
-from flask_github import GitHub
-
 # flask app
-app = Flask(__name__)
+app = Flask(__name__, instance_relative_config=True)
 
 app.config.update(dict(
     DATABASE=os.path.join(app.root_path, 'app.db'),
-    DEBUG=True,
-    SECRET_KEY='development key',
-    USERNAME='admin',
-    PASSWORD='default'
+    DEBUG=False,
 ))
 app.config.from_envvar('FLASKR_SETTINGS', silent=True)
+app.config.from_pyfile('config.py')
 
 # flask-github
-github_app_info = json.loads(open('github_app.json', 'r').read())
-app.config['GITHUB_CLIENT_ID'] = str(github_app_info['Client_ID'])
-app.config['GITHUB_CLIENT_SECRET'] = str(github_app_info['Client_Secret'])
 flask_github = GitHub(app)
 
 # sqlalchemy
