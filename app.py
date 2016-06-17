@@ -147,9 +147,13 @@ def authorized(access_token):
 
     user = User.query.filter_by(access_token=access_token).first()
     if user is None:
-        user = User(access_token)
-        user_info = Github(access_token).get_user()
-        user.username = user_info.login
+        username = Github(access_token).get_user().login
+        user_backup = User.query.filter_by(username=username).first()
+        if user_backup:
+            user = user_backup
+        else:
+            user = User(access_token)
+        user.username = username
         db_session.add(user)
     user.access_token = access_token
     db_session.commit()
